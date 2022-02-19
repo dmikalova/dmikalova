@@ -1,6 +1,6 @@
 # David Mikalova
 
-[![résumé](https://img.shields.io/static/v1?&color=ccff90&label=&labelColor=424242&logo=libreoffice&logoColor=fff&message=résumé&&style=flat-square)](https://docs.google.com/document/d/1goYywuvBpPv44g-5oeT7TsU9gkC9VE5GFCrgrG_D_Mk/export?format=pdf)
+[![résumé](https://img.shields.io/static/v1?&color=ccff90&label=&labelColor=424242&logo=libreoffice&logoColor=fff&message=résumé&&style=flat-square)](./resume.pdf)
 [![linkedin](https://img.shields.io/static/v1?&color=2867b2&label=&labelColor=424242&logo=linkedin&logoColor=fff&message=linkedin&&style=flat-square)](https://github.com/dmikalova)
 
 I am a cloud infrastructure engineer with a passion for automation and internal developer platforms. My free time is spent working on a private Kubernetes cluster for running homegrown web apps and other compute tasks with the ultimate goal of writing an open source music streaming server.
