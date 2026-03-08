@@ -18,10 +18,10 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 ### New Capabilities
 
 - `todo-context-assignment`: Context is set on projects (not tasks); tasks inherit via project; nested project inheritance; project task count shows only open tasks
-- `task-loading`: Open tasks load fully; done tasks load as initial batch of 100 (most recent first) with infinite scroll in history view
+- `ui-label-conventions`: Project tenet — all sidebar and navigation labels use lowercase
 - `todo-windows`: Recurring window schedules on contexts, evaluated client-side using local time
 - `next-view`: The "Next" view surfaces tasks via active windows → contexts → projects pipeline
-- `ui-label-conventions`: Project tenet — all sidebar and navigation labels use lowercase
+- `testing`: 100% coverage target; new unit tests for window evaluation, Next pipeline, project context inheritance, task loading, and store logic; updated integration tests for contexts/projects/tasks/next; frontend component tests for sidebar labels, context selector, and history infinite scroll
 
 ### Modified Capabilities
 

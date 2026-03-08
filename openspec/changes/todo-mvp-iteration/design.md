@@ -23,7 +23,7 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 - Bound task loading: open tasks load fully; done tasks load as capped history (1000, ordered by completion date descending)
 - Verify and fix windows: recurring schedule evaluation (days-of-week + time range) works correctly
 - Fix Next view: pipeline is active windows → contexts → projects → tasks
-- Achieve meaningful test coverage: backend unit + integration tests for contexts/windows/Next query/task loading; frontend component tests for project form, sidebar, Next view
+- Achieve 100% test coverage across all `src/` files; add new unit tests (`next_pipeline_test.ts`, `project_task_count_test.ts`, `task_loading_test.ts`, `store_test.ts`); update existing integration tests; add frontend component tests for sidebar, project form context selector, and history infinite scroll
 - Lowercase all sidebar/nav labels and document this as a project tenet
 
 **Non-Goals:**
