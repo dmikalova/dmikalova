@@ -19,6 +19,11 @@ The Next view SHALL display incomplete tasks whose project (or nearest ancestor 
 - **WHEN** a task's project has no context set and no ancestor project has a context
 - **THEN** that task does not appear in the Next view
 
+#### Scenario: Inbox tasks (no project) do not appear in Next
+
+- **WHEN** a task has no project assigned
+- **THEN** that task does not appear in the Next view and is only visible in the inbox
+
 #### Scenario: Task inherits context through nested project
 
 - **WHEN** a task's immediate project has no context but an ancestor project does, and that context has an active window

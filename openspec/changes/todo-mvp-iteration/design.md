@@ -104,4 +104,4 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 ## Open Questions
 
-- Should tasks with no project (inbox tasks) ever appear in Next, or only project-assigned tasks?
+- ~~Should tasks with no project (inbox tasks) ever appear in Next?~~ **Resolved:** No. Tasks with no project belong to the inbox and never appear in Next.
