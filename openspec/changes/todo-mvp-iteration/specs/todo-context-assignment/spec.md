@@ -68,3 +68,17 @@ The project form SHALL display a context selector showing all available named co
 
 - **WHEN** the user selects a context and saves the project
 - **THEN** the form submits the context ID to the backend
+
+### Requirement: Project task count shows only open tasks
+
+The task count displayed on a project SHALL reflect only incomplete (open) tasks. Completed tasks MUST be excluded from the count.
+
+#### Scenario: Project with mixed tasks shows only open count
+
+- **WHEN** a project has both open and completed tasks
+- **THEN** the displayed task count equals the number of open tasks only
+
+#### Scenario: Project with all tasks done shows zero count
+
+- **WHEN** all tasks in a project are completed
+- **THEN** the displayed task count is 0

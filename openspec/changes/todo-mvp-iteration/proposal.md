@@ -4,7 +4,8 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 
 ## What Changes
 
-- Move context assignment from tasks to projects — tasks inherit context from their project
+- Project task count displays only open (incomplete) tasks — done tasks are excluded from the count
+- Task loading is bounded: all open tasks load fully; closed/done tasks load as a capped history (limit: 1000, ordered by completion date descending)
 - Contexts are named, reusable labels (e.g., "morning", "evening", "free time") shared across projects
 - Windows are recurring schedules on a context (e.g., Mon–Fri 9–12), evaluated client-side
 - Nested projects inherit the nearest ancestor's context if none is explicitly set
@@ -16,7 +17,8 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 
 ### New Capabilities
 
-- `todo-context-assignment`: Context is set on projects (not tasks); tasks inherit via project; nested project inheritance
+- `todo-context-assignment`: Context is set on projects (not tasks); tasks inherit via project; nested project inheritance; project task count shows only open tasks
+- `task-loading`: Open tasks load fully; done tasks load as capped history (1000, most recent first)
 - `todo-windows`: Recurring window schedules on contexts, evaluated client-side using local time
 - `next-view`: The "Next" view surfaces tasks via active windows → contexts → projects pipeline
 - `ui-label-conventions`: Project tenet — all sidebar and navigation labels use lowercase

@@ -9,7 +9,7 @@ The todos app has a data model that includes tasks, projects, contexts, and wind
 
 This means updating a context's windows automatically affects all projects (and their tasks) that use it, with no per-task changes needed.
 
-Current bugs: context assignment is not working correctly on the project form. Windows have been modeled but not exercised end-to-end. The Next view queries all tasks rather than filtering by context/window. The sidebar uses mixed-case labels.
+Current bugs: context assignment is not working correctly on the project form. Windows have been modeled but not exercised end-to-end. The Next view queries all tasks rather than filtering by context/window. The sidebar uses mixed-case labels. Project task counts include done tasks instead of only open tasks. All tasks (including completed) are loaded on startup with no pagination or cap.
 
 Testing is sparse — no systematic backend unit tests for context/window logic, and no frontend component tests for the project form, sidebar, or Next view.
 
@@ -19,9 +19,11 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 - Redesign context assignment: contexts live on projects (not tasks), with inheritance for nested projects
 - Remove context from tasks entirely
+- Fix project task count: show only open (incomplete) tasks
+- Bound task loading: open tasks load fully; done tasks load as capped history (1000, ordered by completion date descending)
 - Verify and fix windows: recurring schedule evaluation (days-of-week + time range) works correctly
 - Fix Next view: pipeline is active windows → contexts → projects → tasks
-- Achieve meaningful test coverage: backend unit + integration tests for contexts/windows/Next query; frontend component tests for project form, sidebar, Next view
+- Achieve meaningful test coverage: backend unit + integration tests for contexts/windows/Next query/task loading; frontend component tests for project form, sidebar, Next view
 - Lowercase all sidebar/nav labels and document this as a project tenet
 
 **Non-Goals:**
@@ -84,11 +86,30 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 **Rationale:** Single source of truth prevents drift; easy to audit and enforce as a project tenet.
 
+---
+
+### Task loading: open tasks fully loaded, done tasks capped at 1000
+
+**Decision:** On startup, the client loads all open (incomplete) tasks. Done tasks are loaded as a history query capped at 1000 records, ordered by completion date descending.
+
+**Rationale:** Open tasks must all be available for Next, inbox, and project views to work correctly. Done tasks are only needed for history browsing — loading unbounded completed tasks would degrade performance over time. 1000 is a reasonable history window for a personal task app.
+
+**Alternative considered:** Pagination for all tasks. Rejected for MVP — open tasks need to be fully available client-side for the Next view pipeline to work without extra round-trips.
+
+---
+
+### Project task count shows only open tasks
+
+**Decision:** The task count displayed on a project shows only incomplete tasks. Done tasks are excluded.
+
+**Rationale:** The count communicates remaining work, not total historical tasks. Including done tasks inflates the number in a misleading way.
+
 ## Risks / Trade-offs
 
 - [Risk] Removing context from tasks is a schema change → Mitigation: migration to drop `context_id` from tasks table (or nullify and stop using it)
 - [Risk] Context inheritance requires a tree traversal → Mitigation: projects are unlikely to be deeply nested; a simple recursive lookup is sufficient at MVP
 - [Risk] Client-side window evaluation uses local device clock → Mitigation: this is intentional (user's local schedule), document it clearly
+- [Risk] Capping done tasks at 1000 means very old completed tasks won't appear in history → Mitigation: acceptable at MVP; pagination can be added later
 - [Risk] Test coverage gap may uncover additional bugs → Mitigation: file as follow-up tasks; don't block MVP
 
 ## Migration Plan
@@ -96,11 +117,13 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 1. Remove `context_id` from tasks (migration)
 2. Ensure projects have `context_id` (nullable) and `parent_project_id` for nesting
 3. Fix project form context selector — save and load context correctly
-4. Implement recurring window model and client-side active evaluation
-5. Implement context inheritance traversal for nested projects
-6. Update Next view to use the new pipeline
-7. Update all sidebar label strings to lowercase
-8. Deploy
+4. Fix project task count query to filter `WHERE completed = false`
+5. Update task loading to load all open tasks + cap done tasks at 1000
+6. Implement recurring window model and client-side active evaluation
+7. Implement context inheritance traversal for nested projects
+8. Update Next view to use the new pipeline
+9. Update all sidebar label strings to lowercase
+10. Deploy
 
 ## Open Questions
 
