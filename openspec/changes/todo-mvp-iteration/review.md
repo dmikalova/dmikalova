@@ -4,9 +4,9 @@ The plan is well-scoped and grounded in the actual codebase. The model simplific
 
 ## Security
 
-- [x] **Input validation is already in place** — Zod schemas on all routes, UUID validation on IDs. No new attack surface from context/project changes. **Address: no action needed.**
-- [x] **Auth middleware covers all routes** — `src/middleware.ts` gates the API. Context/project changes don't bypass this. **Address: no action needed.**
-- [ ] **Context ID injection on task create/update** — `syncTaskContexts` trusts the submitted context UUIDs without verifying they belong to the authenticated user. If multi-user support is ever added, this becomes a privilege escalation vector. **Defer: single-user app at MVP; note as a future concern.**
+- [x] **Input validation is already in place** - Zod schemas on all routes, UUID validation on IDs. No new attack surface from context/project changes. **Address: no action needed.**
+- [x] **Auth middleware covers all routes** - `src/middleware.ts` gates the API. Context/project changes don't bypass this. **Address: no action needed.**
+- [x] **Resource ownership validation on all mutations** - All routes that accept resource IDs (contextId, projectId, parentProjectId) MUST verify the referenced resource belongs to the authenticated user before using it. `syncTaskContexts` currently trusts submitted context UUIDs without ownership checks. This is a privilege escalation vector that MUST be fixed now, not deferred. Apps are built multi-user-aware from day one. **Address: add ownership validation to all resource ID lookups in tasks, projects, and context routes.**
 
 ## Patterns
 
@@ -44,8 +44,9 @@ The plan is well-scoped and grounded in the actual codebase. The model simplific
 
 Items addressed in this change:
 
+- **Add ownership validation to all resource ID lookups** - before using any submitted ID (contextId, projectId, parentProjectId), verify it belongs to the authenticated user; apply to tasks, projects, and context routes
 - Remove `/api/contexts/current` endpoint and its tests
-- Audit and simplify `/api/next` — remove server-side context detection logic
+- Audit and simplify `/api/next` - remove server-side context detection logic
 - Migration: drop `tasks.context_id` column AND `task_contexts` table (after mapping data to project context)
 - Fix `task_count` in projects list query to filter `WHERE completed_at IS NULL`
 - Decide and set up frontend test tooling as first task
@@ -56,12 +57,12 @@ Items addressed in this change:
 
 ## Deferred Items
 
-- Multi-user context ID ownership validation (single-user app at MVP)
 - Empty state for Next view when no active context
 - Context color swatch in project list
 
 ## Updates Required
 
-- **Design — Migration Plan**: Add step to map existing task context assignments to project context before dropping `task_contexts` table and `tasks.context_id` column
-- **Design — Decisions**: Add note that `/api/contexts/current` is removed; `/api/next` server-side context detection is removed in favor of client-side pipeline
-- **Specs — testing**: Add requirement for frontend test tooling setup as a prerequisite task
+- **Design - Migration Plan**: Add step to map existing task context assignments to project context before dropping `task_contexts` table and `tasks.context_id` column
+- **Design - Decisions**: Add ownership validation decision; add note that `/api/contexts/current` is removed; `/api/next` server-side context detection is removed in favor of client-side pipeline
+- **Specs - testing**: Add requirement for frontend test tooling setup as a prerequisite task
+- **Specs - new**: Add `resource-ownership` spec covering ownership validation on all resource ID inputs

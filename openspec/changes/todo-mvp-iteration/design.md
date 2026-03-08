@@ -80,6 +80,14 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 ---
 
+### Ownership validation on all resource ID inputs
+
+**Decision:** All routes that accept resource IDs (contextId, projectId, parentProjectId) MUST verify ownership before use. A shared `assertOwnership(sql, table, id, userId)` helper will be used consistently across all routes. Foreign IDs return 403; non-existent IDs return 404.
+
+**Rationale:** Apps are built multi-user-aware from day one. Even in a currently single-user deployment, privilege escalation vulnerabilities are cheap to prevent now and expensive to retrofit later. Centralizing the check in a helper ensures no route can accidentally omit it.
+
+---
+
 ### Lowercase labels enforced via constants/i18n
 
 **Decision:** All sidebar label strings are defined in a single constants or i18n file. Labels MUST NOT be hardcoded inline in templates.

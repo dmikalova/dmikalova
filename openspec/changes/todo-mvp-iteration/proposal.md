@@ -10,7 +10,7 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 - Windows are recurring schedules on a context (e.g., Mon–Fri 9–12), evaluated client-side
 - Nested projects inherit the nearest ancestor's context if none is explicitly set
 - Wire the "Next" view to use the pipeline: active windows → contexts → projects → tasks
-- Add comprehensive backend and frontend tests covering projects, contexts, windows, and the Next view
+- Add ownership validation: shared `assertOwnership` helper; all resource ID inputs (contextId, projectId, parentProjectId) verified against authenticated user before use
 - Enforce lowercase UI labels across the sidebar and establish this as a project tenet
 
 ## Capabilities
@@ -18,6 +18,7 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 ### New Capabilities
 
 - `todo-context-assignment`: Context is set on projects (not tasks); tasks inherit via project; nested project inheritance; project task count shows only open tasks
+- `resource-ownership`: Shared `assertOwnership` helper validates all submitted resource IDs against the authenticated user; foreign IDs return 403
 - `ui-label-conventions`: Project tenet — all sidebar and navigation labels use lowercase
 - `todo-windows`: Recurring window schedules on contexts, evaluated client-side using local time
 - `next-view`: The "Next" view surfaces tasks via active windows → contexts → projects pipeline
