@@ -1,59 +1,48 @@
 ## Summary
 
-The plan is well-scoped and grounded in the actual codebase. The model simplification (context on project, not task) is the right call. Key findings: the backend currently has context on tasks (not projects) and the migration needs to be explicit; the Next route uses server-side context detection which conflicts with the agreed client-side model and needs to be removed; the project task_count query is unverified; and the testing spec is comprehensive but the frontend test tooling approach needs to be confirmed. No security concerns are blocking. All action items are in-scope for this change.
+The plan is well-scoped and grounded in the actual codebase. The model simplification (context on project, not task) is the right call. All review findings have been resolved and incorporated into the design and specs. No open items remain — ready for task generation.
 
 ## Security
 
-- [x] **Input validation is already in place** - Zod schemas on all routes, UUID validation on IDs. No new attack surface from context/project changes. **Address: no action needed.**
-- [x] **Auth middleware covers all routes** - `src/middleware.ts` gates the API. Context/project changes don't bypass this. **Address: no action needed.**
-- [x] **Resource ownership validation on all mutations** - All routes that accept resource IDs (contextId, projectId, parentProjectId) MUST verify the referenced resource belongs to the authenticated user before using it. `syncTaskContexts` currently trusts submitted context UUIDs without ownership checks. This is a privilege escalation vector that MUST be fixed now, not deferred. Apps are built multi-user-aware from day one. **Address: add ownership validation to all resource ID lookups in tasks, projects, and context routes.**
+- [x] **Input validation is already in place** - Zod schemas on all routes, UUID validation on IDs. No new attack surface from context/project changes.
+- [x] **Auth middleware covers all routes** - `src/middleware.ts` gates the API. Context/project changes don't bypass this.
+- [x] **Resource ownership validation on all mutations** - All routes that accept resource IDs (contextId, projectId, parentProjectId) MUST verify the referenced resource belongs to the authenticated user. `syncTaskContexts` currently trusts submitted context UUIDs without ownership checks. **Address: add `assertOwnership` helper; apply to all resource ID inputs in tasks, projects, and context routes.**
 
 ## Patterns
 
-- [x] **`syncTaskContexts` pattern exists and works** — the delete-then-reinsert pattern for join table sync is already in `tasks.ts`. The same pattern should be used for project context assignment (single FK, not a join table — just a direct UPDATE). **Address: confirm projects use direct `context_id` column, not a join table.**
-- [ ] **`getContextWithWindows` helper pattern** — the context route already has a helper for fetching a context with its windows. The same helper pattern should be used consistently in any new context-related queries. **Address: follow existing helper convention.**
-- [x] **Frontend store follows fetch-then-notify pattern** — all new store methods (history pagination, next pipeline) should follow the existing `async method → api() → this._field = result → notify()` pattern. **Address: document in tasks.**
-- [ ] **`context_id` is currently on tasks in the schema** — the store's `Task` interface has `context_id?: string` and `context_ids?: string[]`. The migration must remove these fields from the DB schema and the TypeScript interfaces, and update all callers. **Address: explicit migration step required.**
+- [x] **`syncTaskContexts` pattern** - the delete-then-reinsert pattern for join table sync is already in `tasks.ts`. Projects use a direct `context_id` FK column (no join table) - just a direct UPDATE.
+- [x] **`getContextWithWindows` helper pattern** - all new context-related queries follow the existing helper in `src/routes/contexts.ts`. No inline context+window fetches. **Address: documented in design decisions.**
+- [x] **Frontend store follows fetch-then-notify pattern** - all new store methods follow the existing `async method → api() → this._field = result → notify()` pattern.
+- [x] **`context_id` is currently on tasks in the schema** - the store's `Task` interface has `context_id?: string` and `context_ids?: string[]`. **Address: migration drops both DB fields and removes from TypeScript interfaces and all callers. Documented in migration plan.**
 
 ## Alternatives
 
-- [ ] **Infinite scroll implementation** — the browser's `IntersectionObserver` API is the idiomatic way to implement scroll-to-load in Lit components without scroll event listeners. **Address: specify IntersectionObserver in tasks.**
-- [ ] **Project context inheritance traversal** — at MVP, projects are unlikely to be more than 2–3 levels deep. A simple recursive lookup in the store (not a DB recursive CTE) is sufficient and easier to test. **Address: confirm client-side traversal approach in tasks.**
+- [x] **Infinite scroll uses IntersectionObserver** - watching a sentinel element at the bottom of the list. No scroll event listeners. **Address: documented in design decisions.**
+- [x] **Project context inheritance traversal** - client-side recursive lookup in the store. No DB recursive CTE needed at MVP. **Address: documented in design decisions.**
 
 ## Simplifications
 
-- [x] **Remove `/api/contexts/current` endpoint** — this server-side endpoint was designed for the old server-side window evaluation model. With client-side evaluation, it is now redundant. **Address: remove endpoint and its integration tests.**
-- [x] **Remove `contextId`/`projectId` query params from `GET /api/next`** — the Next pipeline is now fully client-side. The backend `/api/next` scoring endpoint may still be useful but its context detection logic should be removed. **Address: audit and simplify or remove the `/api/next` backend route.**
-- [ ] **`context_id` on tasks schema** — tasks currently store `context_id` (single) AND a `task_contexts` join table. The agreed model removes context from tasks entirely. Both the column and the join table need to be dropped. **Address: migration drops `tasks.context_id` column AND `task_contexts` table.**
+- [x] **Remove `/api/contexts/current` endpoint** - redundant with client-side window evaluation. **Address: remove endpoint and its integration tests.**
+- [x] **Remove server-side context detection from `/api/next`** - the Next pipeline is fully client-side. Backend `/api/next` scoring endpoint may be simplified or removed. **Address: documented in migration plan.**
+- [x] **`context_id` on tasks schema** - tasks currently store `context_id` (single) AND a `task_contexts` join table. Both are dropped. Current data is test data only - no data preservation needed. **Address: migration plan step 1.**
 
 ## Missing Considerations
 
-- [x] **Migration for existing task_contexts data** — if users have existing context assignments on tasks, dropping the join table destroys that data. A migration step should map existing task context → task's project context before dropping. **Address: add to migration plan.**
-- [ ] **`task_count` on projects is not currently filtered** — the existing `GET /api/projects` query includes a `task_count` subquery. It needs to be verified and fixed to `WHERE completed_at IS NULL`. **Address: audit and fix the projects list query.**
-- [x] **Frontend test tooling not specified** — the codebase uses Deno + Lit web components. There is no existing frontend test setup. The testing spec assumes component tests exist but the tooling (e.g., `@web/test-runner`, `happy-dom`, or Deno's built-in test runner with a DOM shim) needs to be decided before tasks are written. **Address: decide frontend test tooling as the first task.**
-- [ ] **History view currently loads via `fetchHistory()` which has no pagination** — the store's `fetchHistory()` method fetches all history entries. This needs to be replaced with the paginated approach (initial 100, then infinite scroll). **Address: update `fetchHistory` and add `fetchMoreHistory` to store.**
-- [ ] **Error state for infinite scroll** — if a history page fetch fails mid-scroll, the UI should show an error and allow retry. **Address: add error handling to history fetch-more logic.**
+- [x] **Migration for existing task_contexts data** - current data is test data only; no data preservation required. Schema change applied directly.
+- [x] **`task_count` on projects is not currently filtered** - `GET /api/projects` task_count subquery must filter `WHERE completed_at IS NULL`. **Address: migration plan step 6.**
+- [x] **Frontend test tooling not specified** - must be decided and set up as first task before any component tests are written.
+- [x] **History view `fetchHistory()` has no pagination** - replaced with initial 100 + `fetchMoreHistory` paginated approach. **Address: migration plan step 8.**
+- [x] **Error state for infinite scroll** - history fetch-more shows error and retry on failure. **Address: migration plan step 9.**
 
 ## Valuable Additions
 
-- [ ] **Loading indicator at bottom of history list** — while a next page is fetching, a spinner or "loading..." text at the bottom improves UX. **Address: include in history view tasks.**
-- [ ] **Empty state for Next view** — if no contexts have active windows right now, the Next view should show a helpful empty state ("no active context right now") rather than a blank list. **Defer: nice-to-have for MVP+1.**
-- [ ] **Context color used in project list** — since projects now show their context, displaying the context color as a small swatch next to the project name would reinforce the association visually. **Defer: polish pass after MVP.**
+- [x] **Loading indicator at bottom of history list** - spinner while next page is fetching. **Address: migration plan step 9.**
+- [ ] **Empty state for Next view** - "no active context right now" empty state. **Defer: MVP+1.**
+- [ ] **Context color swatch in project list** - visual association of project to context. **Defer: polish pass after MVP.**
 
 ## Action Items
 
-Items addressed in this change:
-
-- **Add ownership validation to all resource ID lookups** - before using any submitted ID (contextId, projectId, parentProjectId), verify it belongs to the authenticated user; apply to tasks, projects, and context routes
-- Remove `/api/contexts/current` endpoint and its tests
-- Audit and simplify `/api/next` - remove server-side context detection logic
-- Migration: drop `tasks.context_id` column AND `task_contexts` table (after mapping data to project context)
-- Fix `task_count` in projects list query to filter `WHERE completed_at IS NULL`
-- Decide and set up frontend test tooling as first task
-- Update store `fetchHistory` to paginated approach; add `fetchMoreHistory`
-- Add error handling + loading indicator to history infinite scroll
-- Use `IntersectionObserver` for infinite scroll trigger
-- Confirm client-side recursive traversal for project context inheritance
+All items have been incorporated into the design and specs. See design.md Migration Plan for the ordered implementation steps.
 
 ## Deferred Items
 
@@ -62,7 +51,7 @@ Items addressed in this change:
 
 ## Updates Required
 
-- **Design - Migration Plan**: Add step to map existing task context assignments to project context before dropping `task_contexts` table and `tasks.context_id` column
-- **Design - Decisions**: Add ownership validation decision; add note that `/api/contexts/current` is removed; `/api/next` server-side context detection is removed in favor of client-side pipeline
-- **Specs - testing**: Add requirement for frontend test tooling setup as a prerequisite task
-- **Specs - new**: Add `resource-ownership` spec covering ownership validation on all resource ID inputs
+All updates have been applied:
+- Design decisions updated: `assertOwnership` helper, `IntersectionObserver`, context helper pattern, client-side traversal, `/api/contexts/current` removal, `/api/next` simplification
+- Migration plan updated: simplified (no data preservation), ordered implementation steps
+- Specs added: `resource-ownership`

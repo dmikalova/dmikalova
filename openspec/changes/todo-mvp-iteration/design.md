@@ -96,7 +96,23 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 ---
 
-### Task loading: open tasks fully loaded, done tasks capped at 1000
+### Infinite scroll uses IntersectionObserver
+
+**Decision:** The history view infinite scroll is implemented using the browser's `IntersectionObserver` API watching a sentinel element at the bottom of the list.
+
+**Rationale:** `IntersectionObserver` is the idiomatic approach for scroll-to-load in web components - no scroll event listeners, no debouncing, and it works correctly inside any scroll container.
+
+---
+
+### Context route helpers used consistently
+
+**Decision:** All new context-related queries follow the existing `getContextWithWindows(sql, contextId)` helper pattern. No new context queries fetch context and windows separately inline.
+
+**Rationale:** The pattern already exists in `src/routes/contexts.ts`. Consistent use prevents divergence and keeps queries readable.
+
+---
+
+### Task loading: open tasks fully loaded, done tasks capped at 100
 
 **Decision:** On startup, the client loads all open (incomplete) tasks. Done tasks are loaded as an initial batch of 100 records (most recently completed first). The history view supports infinite scroll — scrolling to the end fetches the next batch of completed tasks on demand.
 
@@ -114,24 +130,30 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 ## Risks / Trade-offs
 
-- [Risk] Removing context from tasks is a schema change → Mitigation: migration to drop `context_id` from tasks table (or nullify and stop using it)
-- [Risk] Context inheritance requires a tree traversal → Mitigation: projects are unlikely to be deeply nested; a simple recursive lookup is sufficient at MVP
+- [Risk] Schema migration drops `task_contexts` table and `tasks.context_id` column - current data is test data only so no preservation is needed; just apply the schema change directly
+- [Risk] Context inheritance requires a tree traversal → Mitigation: projects are unlikely to be deeply nested; a simple recursive lookup in the store is sufficient at MVP
 - [Risk] Client-side window evaluation uses local device clock → Mitigation: this is intentional (user's local schedule), document it clearly
 - [Risk] Capping initial done tasks at 100 means older completed tasks aren't immediately available → Mitigation: infinite scroll in history view loads them on demand
 - [Risk] Test coverage gap may uncover additional bugs → Mitigation: file as follow-up tasks; don't block MVP
 
 ## Migration Plan
 
-1. Remove `context_id` from tasks (migration)
-2. Ensure projects have `context_id` (nullable) and `parent_project_id` for nesting
-3. Fix project form context selector — save and load context correctly
-4. Fix project task count query to filter `WHERE completed = false`
-5. Update task loading to load all open tasks + cap done tasks at 1000
-6. Implement recurring window model and client-side active evaluation
-7. Implement context inheritance traversal for nested projects
-8. Update Next view to use the new pipeline
-9. Update all sidebar label strings to lowercase
-10. Deploy
+Current data is test data only — no data preservation is required. Apply schema changes directly.
+
+1. Drop `task_contexts` table and `tasks.context_id` column; remove `context_ids` from TypeScript `Task` interface and all callers
+2. Add `context_id` (nullable FK) and `parent_project_id` (nullable FK) to `projects` table
+3. Remove `/api/contexts/current` endpoint and its tests
+4. Simplify `/api/next` — remove server-side context detection; client handles the pipeline
+5. Add `assertOwnership` helper; apply to all resource ID inputs in tasks, projects, context routes
+6. Fix `task_count` subquery in `GET /api/projects` to `WHERE completed_at IS NULL`
+7. Fix project form context selector — save and load `context_id` correctly
+8. Update store `fetchHistory` to load initial 100 completed tasks; add `fetchMoreHistory` for paginated loading
+9. Add `IntersectionObserver`-based infinite scroll to history view with loading indicator and error/retry state
+10. Implement recurring window model and client-side active evaluation
+11. Implement client-side context inheritance traversal for nested projects
+12. Update Next view to use the new pipeline
+13. Update all sidebar label strings to lowercase
+14. Deploy
 
 ## Open Questions
 
