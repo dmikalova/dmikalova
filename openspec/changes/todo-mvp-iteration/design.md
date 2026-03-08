@@ -90,9 +90,9 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 
 ### Task loading: open tasks fully loaded, done tasks capped at 1000
 
-**Decision:** On startup, the client loads all open (incomplete) tasks. Done tasks are loaded as a history query capped at 1000 records, ordered by completion date descending.
+**Decision:** On startup, the client loads all open (incomplete) tasks. Done tasks are loaded as an initial batch of 100 records (most recently completed first). The history view supports infinite scroll — scrolling to the end fetches the next batch of completed tasks on demand.
 
-**Rationale:** Open tasks must all be available for Next, inbox, and project views to work correctly. Done tasks are only needed for history browsing — loading unbounded completed tasks would degrade performance over time. 1000 is a reasonable history window for a personal task app.
+**Rationale:** Open tasks must all be available for Next, inbox, and project views. 100 done tasks covers recent history without a heavy initial load. Infinite scroll in history gives access to the full archive without upfront cost.
 
 **Alternative considered:** Pagination for all tasks. Rejected for MVP — open tasks need to be fully available client-side for the Next view pipeline to work without extra round-trips.
 
@@ -109,7 +109,7 @@ Testing is sparse — no systematic backend unit tests for context/window logic,
 - [Risk] Removing context from tasks is a schema change → Mitigation: migration to drop `context_id` from tasks table (or nullify and stop using it)
 - [Risk] Context inheritance requires a tree traversal → Mitigation: projects are unlikely to be deeply nested; a simple recursive lookup is sufficient at MVP
 - [Risk] Client-side window evaluation uses local device clock → Mitigation: this is intentional (user's local schedule), document it clearly
-- [Risk] Capping done tasks at 1000 means very old completed tasks won't appear in history → Mitigation: acceptable at MVP; pagination can be added later
+- [Risk] Capping initial done tasks at 100 means older completed tasks aren't immediately available → Mitigation: infinite scroll in history view loads them on demand
 - [Risk] Test coverage gap may uncover additional bugs → Mitigation: file as follow-up tasks; don't block MVP
 
 ## Migration Plan
