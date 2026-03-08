@@ -4,20 +4,21 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 
 ## What Changes
 
-- Fix context assignment on todos — setting and persisting contexts is not working correctly
-- Verify and fix windows support — time-bounded context filters have not been tested end-to-end
-- Wire the "Next" view to pull from contexts — currently does not reflect context-filtered todos
-- Add comprehensive backend and frontend tests covering todos, contexts, windows, and the Next view
-- Enforce lowercase UI labels across the sidebar (e.g., "add task", "search", "inbox", "next", "due", "history", "settings")
-- Establish lowercase labels as a project tenet going forward
+- Move context assignment from tasks to projects — tasks inherit context from their project
+- Contexts are named, reusable labels (e.g., "morning", "evening", "free time") shared across projects
+- Windows are recurring schedules on a context (e.g., Mon–Fri 9–12), evaluated client-side
+- Nested projects inherit the nearest ancestor's context if none is explicitly set
+- Wire the "Next" view to use the pipeline: active windows → contexts → projects → tasks
+- Add comprehensive backend and frontend tests covering projects, contexts, windows, and the Next view
+- Enforce lowercase UI labels across the sidebar and establish this as a project tenet
 
 ## Capabilities
 
 ### New Capabilities
 
-- `todo-context-assignment`: Setting, saving, and displaying contexts on individual todos
-- `todo-windows`: Time-bounded filters (windows) within contexts that control todo visibility
-- `next-view`: The "Next" view that surfaces todos based on active context and window state
+- `todo-context-assignment`: Context is set on projects (not tasks); tasks inherit via project; nested project inheritance
+- `todo-windows`: Recurring window schedules on contexts, evaluated client-side using local time
+- `next-view`: The "Next" view surfaces tasks via active windows → contexts → projects pipeline
 - `ui-label-conventions`: Project tenet — all sidebar and navigation labels use lowercase
 
 ### Modified Capabilities
@@ -26,7 +27,7 @@ The todos app has several bugs preventing MVP usability: context assignment is b
 
 ## Impact
 
-- Backend: todo CRUD endpoints, context assignment logic, window evaluation logic, Next query
-- Frontend: todo detail form (context field), sidebar label components, Next view component
-- Tests: new backend unit/integration tests for todos + contexts + windows; new frontend component tests for todo form, sidebar, and Next view
-- No breaking API changes expected; this is a bug-fix and polish pass to reach MVP
+- Schema: remove `context_id` from tasks; ensure `context_id` and `parent_project_id` on projects
+- Backend: project CRUD (context field), context/window CRUD, Next query
+- Frontend: project form (context selector), sidebar label components, Next view component, window evaluation logic
+- Tests: new backend unit/integration tests for projects + contexts + windows; new frontend component tests for project form, sidebar, and Next view
