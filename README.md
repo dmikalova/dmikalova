@@ -27,10 +27,11 @@ complex unsubscribe flows. Built with Deno, Hono, Vue.js, and PostgreSQL.
 Centralized authentication service for mklv.tech apps using Supabase Auth. Built
 with Deno and Hono.
 
-### [github-meta](https://github.com/dmikalova/github-meta)
+### [project-standards](https://github.com/dmikalova/project-standards)
 
-Shared configurations and reusable workflows for all repositories. Provides base
-lefthook pre-commit hooks and GitHub Actions workflows.
+The standards every project follows regardless of language: shared lint and hook
+configs, reusable CI/CD workflows, and a weekly conformance bot that keeps each
+project in line.
 
 ### [Factorio Mods](https://github.com/dmikalova/factorio-mods)
 
